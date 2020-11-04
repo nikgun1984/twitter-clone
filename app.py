@@ -112,8 +112,9 @@ def login():
 @app.route('/logout')
 def logout():
     """Handle logout of user."""
-
-    # IMPLEMENT THIS
+    do_logout()
+    flash("See you later, alligator!!!","success")
+    return redirect('/login')
 
 
 ##############################################################################
@@ -150,6 +151,7 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
+
     return render_template('users/show.html', user=user, messages=messages)
 
 
