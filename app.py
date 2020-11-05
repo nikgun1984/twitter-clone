@@ -74,6 +74,9 @@ def signup():
                 password=form.password.data,
                 email=form.email.data,
                 image_url=form.image_url.data or User.image_url.default.arg,
+                header_image_url = form.header_image_url.data,
+                location = form.location.data,
+                bio = form.bio.data
             )
             db.session.commit()
 
@@ -142,7 +145,7 @@ def users_show(user_id):
     """Show user profile."""
 
     user = User.query.get_or_404(user_id)
-
+    
     # snagging messages in order from the database;
     # user.messages won't be in order by default
     messages = (Message
@@ -212,9 +215,29 @@ def stop_following(follow_id):
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    form = UserAddForm(obj=g.user)
 
-    # IMPLEMENT THIS
+    if form.validate_on_submit():
 
+        user = User.authenticate(form.username.data,form.password.data)
+
+        if user:
+            g.user.username = form.username.data
+            g.user.email = form.email.data
+            g.user.image_url = form.image_url.data
+            g.user.header_image_url = form.header_image_url.data,
+            g.user.location = form.location.data,
+            g.user.bio = form.bio.data
+            db.session.commit()
+            return redirect(f'/users/{g.user.id}')
+
+        flash("Invalid password", 'danger')
+        return redirect('/')
+
+    return render_template('users/login.html', form=form)
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
@@ -223,7 +246,7 @@ def delete_user():
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-
+    
     do_logout()
 
     db.session.delete(g.user)

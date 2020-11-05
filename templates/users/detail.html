@@ -3,7 +3,7 @@
 {% block content %}
 
 <div id="warbler-hero" class="full-width">
-  <img src="https://images.squarespace-cdn.com/content/v1/50c2031de4b02a7395e3e36f/1412339904112-IE9AGHQ3MCMI7SUEL7QC/ke17ZwdGBToddI8pDm48kJQKckXYXDx_7-ob8YDv6s0UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYwL8IeDg6_3B-BRuF4nNrNcQkVuAT7tdErd0wQFEGFSnJuGnsmkRKNLexvIM4mYdPsM7du6TRK8uHhn3pGyoqHZwCAti4UffDZPvQdWwAG5Xw/computer+science+header.jpg?format=2500w" class="img-fluid alt="">
+  <img src="{{user.header_image_url}}" class="img-fluid alt="">
 </div>
 <img src="{{ user.image_url }}" alt="Image for {{ user.username }}" id="profile-avatar">
 <div class="row full-width">
