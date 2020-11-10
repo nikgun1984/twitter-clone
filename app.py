@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Follows, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -15,12 +15,12 @@ app = Flask(__name__)
 # if not set there, use development local db.
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     os.environ.get('DATABASE_URL', 'postgres:///warbler'))
-
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+# app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
-toolbar = DebugToolbarExtension(app)
+# toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
@@ -307,7 +307,6 @@ def messages_destroy(message_id):
 ##############################################################################
 # Homepage and error pages
 
-
 @app.route('/')
 def homepage():
     """Show homepage:
@@ -317,16 +316,51 @@ def homepage():
     """
 
     if g.user:
+        following = [user.id for user in g.user.following]
         messages = (Message
-                    .query
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
-
-        return render_template('home.html', messages=messages)
+                   .query
+                   .filter(Message.user_id.in_(following))
+                   .order_by(Message.timestamp.desc())
+                   .limit(100)
+                   .all())
+        # import pdb
+        # pdb.set_trace()
+        return render_template('/users/home_all.html', messages=messages)
 
     else:
         return render_template('home-anon.html')
+
+@app.route('/users/add_like/<int:message_id>', methods=["POST"])
+def like_unlike_post(message_id):
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    message = Message.query.get(message_id)
+    # import pdb
+    # pdb.set_trace()
+    if message not in g.user.likes:
+        like = Likes(user_id=message.user_id,message_id=message_id)
+        g.user.likes.append(message)
+        db.session.commit()
+    else:
+        like = Likes.query.filter(Likes.message_id == message_id).first()
+        db.session.delete(like)
+        db.session.commit()
+    return redirect('/')
+
+@app.route('/messages/liked')
+def liked_posts():
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    return render_template('/users/home_liked.html')
+
+
+    
+
+
 
 
 ##############################################################################
