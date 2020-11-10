@@ -2,7 +2,7 @@
 
 # run these tests like:
 #
-#    python -m unittest test_user_model.py
+# python -m unittest test_user_model.py
 
 
 import os
@@ -41,18 +41,51 @@ class UserModelTestCase(TestCase):
 
         self.client = app.test_client()
 
-    def test_user_model(self):
-        """Does basic model work?"""
-
-        u = User(
+        self.u = User(
             email="test@test.com",
             username="testuser",
             password="HASHED_PASSWORD"
         )
 
-        db.session.add(u)
+        self.u1 = User(
+            email='test2@test.com',
+            username="testuser2",
+            password="HASHED_PASSWORD"
+        )
+
+    def test_user_model(self):
+        """Does basic model work?"""
+
+        db.session.add(self.u)
         db.session.commit()
 
         # User should have no messages & no followers
-        self.assertEqual(len(u.messages), 0)
-        self.assertEqual(len(u.followers), 0)
+        self.assertEqual(len(self.u.messages), 0)
+        self.assertEqual(len(self.u.followers), 0)
+
+    def test_repr(self):
+        """Will test __repr__ method"""
+        self.assertEqual(str(self.u),self.u.__repr__())
+
+    def test_is_following(self):
+        self.u.following.append(self.u1)
+        self.assertEqual(self.u.is_following(self.u1), True)
+
+    def test_is_not_following(self):
+        self.assertNotEqual(self.u.is_following(self.u1), True)
+
+    def test_is_followed_by(self):
+        self.u.followers.append(self.u1)
+        self.assertEqual(self.u.is_followed_by(self.u1), True)
+
+    def test_is_not_followed(self):
+        self.assertNotEqual(self.u.is_followed_by(self.u1), True)
+
+    def test_signup(self):
+
+        self.assertEqual(User.signup('testuser','test@test.com','HASHED_PASSWORD'),self.u)
+
+
+    
+
+

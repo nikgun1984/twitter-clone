@@ -323,8 +323,6 @@ def homepage():
                    .order_by(Message.timestamp.desc())
                    .limit(100)
                    .all())
-        # import pdb
-        # pdb.set_trace()
         return render_template('/users/home_all.html', messages=messages)
 
     else:
@@ -338,8 +336,6 @@ def like_unlike_post(message_id):
         return redirect("/")
     
     message = Message.query.get(message_id)
-    # import pdb
-    # pdb.set_trace()
     if message not in g.user.likes:
         like = Likes(user_id=message.user_id,message_id=message_id)
         g.user.likes.append(message)
