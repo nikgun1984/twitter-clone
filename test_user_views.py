@@ -3,7 +3,7 @@
 import os
 from unittest import TestCase
 
-from models import db, connect_db, Message, User
+from models import db, connect_db, Message, User, Follows
 
 os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
@@ -29,34 +29,22 @@ class UserViewTestCase(TestCase):
         db.drop_all()
         db.create_all()
 
-        self.client = app.test_client()
-
-        testuser1 = User.signup(username="testuser1",
+        self.testuser1 = User.signup(username="testuser1",
                                     email="test@test.com",
                                     password="testuser1")
         uid1 = 1111
-        testuser1.id = uid1
+        self.testuser1.id = uid1
 
-        testuser2 = User.signup(username="testuser2",
+        self.testuser2 = User.signup(username="testuser2",
                                     email="test2@test.com",
                                     password="testuser2")
 
         uid2 = 2222
-        testuser2.id = uid2
+        self.testuser2.id = uid2
 
         db.session.commit()
 
-        u1 = User.query.get(uid1)
-        u2 = User.query.get(uid2)
-
-        self.testuser1 = u1
-        self.uid1 = uid1
-
-        self.testuser2 = u2
-        self.uid2 = uid2
-
-        self.testuser1.following.append(self.testuser2)
-        db.session.commit()
+        self.client = app.test_client()
 
     def tearDown(self):
         res = super().tearDown()
@@ -64,6 +52,7 @@ class UserViewTestCase(TestCase):
         return res
 
     def test_show_following(self):
+        follower = Follows(user_being_followed_id=self.testuser2.id, user_following_id=self.testuser1.id)
         """Test if testuser1 follows testuser2"""
         with self.client as c:
             with c.session_transaction() as sess:
@@ -72,5 +61,18 @@ class UserViewTestCase(TestCase):
             resp = c.get(f"/users/{self.testuser1.id}/following")
 
             html = resp.get_data(as_text=True)
-
             self.assertEqual(resp.status_code, 200)
+            self.assertIn("@testuser1", str(resp.data))
+
+    def test_users_followers(self):
+        """Test followers"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser1.id
+
+            resp = c.get(f"/users/{self.testuser1.id}/followers")
+
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code,200)
