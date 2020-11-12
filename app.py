@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, flash, redirect, session, g
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
@@ -328,7 +328,7 @@ def homepage():
     else:
         return render_template('home-anon.html')
 
-@app.route('/users/add_like/<int:message_id>', methods=["POST"])
+@app.route('/users/add_like/<int:message_id>', methods=["POST","DELETE"])
 def like_unlike_post(message_id):
 
     if not g.user:
@@ -340,11 +340,14 @@ def like_unlike_post(message_id):
         like = Likes(user_id=message.user_id,message_id=message_id)
         g.user.likes.append(message)
         db.session.commit()
+        serialized = like.serialize()
+        like = Likes.query.filter(Likes.message_id == message_id).first()
+        return jsonify(like=serialized), 201
     else:
         like = Likes.query.filter(Likes.message_id == message_id).first()
         db.session.delete(like)
         db.session.commit()
-    return redirect('/')
+        return jsonify(message="Deleted")
 
 @app.route('/messages/liked')
 def liked_posts():

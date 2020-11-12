@@ -34,7 +34,8 @@ class Likes(db.Model):
 
     id = db.Column(
         db.Integer,
-        primary_key=True
+        primary_key=True,
+        autoincrement = True
     )
 
     user_id = db.Column(
@@ -47,6 +48,13 @@ class Likes(db.Model):
         db.ForeignKey('messages.id', ondelete='cascade'),
         unique=True
     )
+
+    def serialize(self):
+        """Serialize our object like to dictionary for json"""
+        return {
+            "user_id": self.user_id,
+            "message_id": self.message_id
+        }
 
 
 class User(db.Model):
