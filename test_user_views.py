@@ -76,3 +76,41 @@ class UserViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code,200)
+            self.assertIn("@testuser1", str(resp.data))
+
+    def test_unauthorised_access_to_see_following(self):
+        """Test if access denied to the users user following"""
+
+        with self.client as c:
+            resp = c.get(f"/users/{self.testuser1.id}/following",follow_redirects=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn("@testuser1", str(resp.data))
+            self.assertIn("Access unauthorized", str(resp.data))
+
+    
+    def test_unauthorised_access_to_see_followers(self):
+        """Test if access denied to the followers"""
+
+        with self.client as c:
+            resp = c.get(f"/users/{self.testuser1.id}/followers", follow_redirects=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn("@testuser1", str(resp.data))
+            self.assertIn("Access unauthorized", str(resp.data))
+
+
+    def test_users_search(self):
+        with self.client as c:
+            resp = c.get("/users?q=test")
+
+            self.assertIn("@testuser1", str(resp.data))
+            self.assertIn("@testuser2", str(resp.data))
+
+    def test_user_show(self):
+        with self.client as c:
+            resp = c.get(f"/users/{self.testuser1.id}")
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("@testuser", str(resp.data))
+
+
+            

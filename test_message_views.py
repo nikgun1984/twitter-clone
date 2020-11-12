@@ -98,18 +98,6 @@ class MessageViewTestCase(TestCase):
             self.assertEqual(msg.text, "Hello")
 
 
-    def test_show_following(self):
-        
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = self.testuser1.id
-
-            resp = c.get(f"/users/{self.testuser1.id}/following")
-
-            html = resp.get_data(as_text=True)
-
-            self.assertEqual(resp.status_code, 200)
-
 
 
 
