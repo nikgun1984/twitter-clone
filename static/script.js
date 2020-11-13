@@ -30,12 +30,6 @@ $("button.thumbup").on("click",async function(evt){
 
 });
 
-function getID(arr){
-    const str = arr.lastIndexOf('/')+1;
-    const end = arr.length;
-    return arr.slice(str,end);
-}
-
 $(document).ready(function() {
 $('#add_form').on('click',"#add_me", async function(evt) {
     evt.preventDefault();
@@ -48,3 +42,9 @@ $('#add_form').on('click',"#add_me", async function(evt) {
     }
 });
 });
+
+function getID(arr){
+    const str = arr.lastIndexOf('/')+1;
+    const end = arr.length;
+    return arr.slice(str,end);
+}
