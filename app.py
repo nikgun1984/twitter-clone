@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message, Follows, Likes
+from functools import wraps
 
 CURR_USER_KEY = "curr_user"
 
@@ -45,6 +46,15 @@ def do_login(user):
 
     session[CURR_USER_KEY] = user.id
 
+def login_required(f):
+    @wraps(f)
+    def wrap(*args,**kwargs):
+        if CURR_USER_KEY in session:
+            return f(*args,**kwargs)
+        else:
+            flash("Access unauthorized.", "danger")
+            return redirect("/")
+    return wrap
 
 def do_logout():
     """Logout user."""
@@ -58,16 +68,16 @@ def context_processor():
     form = MessageForm()
     return dict(form=form)
 
-def not_signed_in():
-    """If user not signed in"""
-    if not g.user:
-        flash("Access unauthorized.", "danger")
-        return redirect("/")
-
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('404.html'), 404
+
+@app.errorhandler(405)
+def resource_not_found(e):
+    # note that we set the 405 status explicitly
+    return render_template('405.html'), 405
+
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
@@ -127,8 +137,8 @@ def login():
 
     return render_template('users/login.html', user_form=form)
 
-
 @app.route('/logout')
+@login_required
 def logout():
     """Handle logout of user."""
     do_logout()
@@ -175,30 +185,27 @@ def users_show(user_id):
 
 
 @app.route('/users/<int:user_id>/following')
+@login_required
 def show_following(user_id):
     """Show list of people this user is following."""
-
-    not_signed_in()
 
     user = User.query.get_or_404(user_id)
     return render_template('users/following.html', user=user)
 
 
 @app.route('/users/<int:user_id>/followers')
+@login_required
 def users_followers(user_id):
     """Show list of followers of this user."""
-
-    not_signed_in()
 
     user = User.query.get_or_404(user_id)
     return render_template('users/followers.html', user=user)
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
+@login_required
 def add_follow(follow_id):
     """Add a follow for the currently-logged-in user."""
-
-    not_signed_in()
 
     followed_user = User.query.get_or_404(follow_id)
     g.user.following.append(followed_user)
@@ -208,10 +215,9 @@ def add_follow(follow_id):
 
 
 @app.route('/users/stop-following/<int:follow_id>', methods=['POST'])
+@login_required
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user."""
-
-    not_signed_in()
 
     followed_user = User.query.get(follow_id)
     g.user.following.remove(followed_user)
@@ -221,9 +227,9 @@ def stop_following(follow_id):
 
 
 @app.route('/users/profile', methods=["GET", "POST"])
+@login_required
 def profile():
     """Update profile for current user."""
-    not_signed_in()
     form = UserAddForm(obj=g.user)
 
     if form.validate_on_submit():
@@ -246,11 +252,9 @@ def profile():
     return render_template('users/login.html', user_form=form)
 
 @app.route('/users/delete', methods=["POST"])
+@login_required
 def delete_user():
-    """Delete user."""
-
-    not_signed_in()
-    
+    """Delete user."""    
     do_logout()
 
     db.session.delete(g.user)
@@ -263,9 +267,9 @@ def delete_user():
 # Messages routes:
 
 @app.route('/messages/new', methods=["GET","POST"])
+@login_required
 def messages_add():
     """Create a message on the front end(modal window) and save it in the database"""
-    not_signed_in()
     text = request.json["text"]
     msg = Message(text=text)
     g.user.messages.append(msg)
@@ -283,10 +287,9 @@ def messages_show(message_id):
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
+@login_required
 def messages_destroy(message_id):
     """Delete a message."""
-
-    not_signed_in()
 
     msg = Message.query.get(message_id)
     db.session.delete(msg)
@@ -321,9 +324,9 @@ def homepage():
         return render_template('home-anon.html')
 
 @app.route('/users/add_like/<int:message_id>', methods=["POST","DELETE"])
+@login_required
 def like_unlike_post(message_id):
     """Add/Delete liked messages"""
-    not_signed_in()
     
     message = Message.query.get(message_id)
     if message not in g.user.likes:
@@ -343,7 +346,7 @@ def like_unlike_post(message_id):
 @app.route('/messages/liked')
 def liked_posts():
     """Will diplay only liked messages of the users the authorized user follows"""
-    not_signed_in()
+    # not_signed_in()
     return render_template('home.html',messages=g.user.likes)
 
 
