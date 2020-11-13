@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
@@ -276,9 +276,9 @@ def messages_add():
         g.user.messages.append(msg)
         db.session.commit()
 
-        return redirect(f"/users/{g.user.id}")
-
-    return render_template('messages/new.html', form=form)
+        return jsonify(status='ok')
+        # redirect(f"/users/{g.user.id}")
+    return render_template('home.html', form=form)
 
 
 @app.route('/messages/<int:message_id>', methods=["GET"])

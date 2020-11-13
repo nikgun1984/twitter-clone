@@ -35,3 +35,48 @@ function getID(arr){
     const end = arr.length;
     return arr.slice(str,end);
 }
+
+
+// $('#new_message').on("click",'button',function(evt){
+//     evt.preventDefault();
+//     console.log('hello');
+// });
+
+// $('.add_modal').click(function (evt) {
+//     evt.preventDefault();
+//     const url = $(this).data('whatever');
+//     $.get(url, function (data) {
+//         $('#exampleModal .modal-content').html(data);
+//         $('#exampleModal').modal();
+
+//         $('#submit').on("click", function(evt){
+//             evt.preventDefault();
+//             $.post(url, data = $('#ModalForm').serialize(), function (data){
+//                 if (data.status == 'ok') {
+//                     $('#exampleModal').modal('hide');
+//                     location.reload();
+//                 } else {
+//                     const obj = JSON.parse(data);
+//                     for (var key in obj) {
+//                         if (obj.hasOwnProperty(key)) {
+//                             var value = obj[key];
+//                         }
+//                     }
+//                 }
+//             })
+//         })
+//     });
+// });
+
+$('#add_form').click(async function(event) {
+    event.preventDefault();
+    await axios.post(`/messages/new`, data=$('#AddNewModal').serialize())
+    if (data.status == 'ok') {
+        $('#editModal').modal('hide');
+        location.reload();
+    }
+    else {
+        $('#AddNewModal .modal-content').html(data);
+      }
+
+  });
