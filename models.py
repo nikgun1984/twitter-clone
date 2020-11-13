@@ -210,6 +210,13 @@ class Message(db.Model):
 
     user = db.relationship('User')
 
+    def serialize(self):
+        """Serialize our object message to dictionary for json"""
+        return {
+            "text": self.text,
+            "user_id": self.user_id
+        }
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.

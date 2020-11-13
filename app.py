@@ -52,6 +52,12 @@ def do_logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
 
+def validate_form(form):
+    if form.validate_on_submit():
+        msg = Message(text=form.text.data)
+        g.user.messages.append(msg)
+        db.session.commit()
+
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
@@ -140,7 +146,7 @@ def list_users():
     return render_template('users/index.html', users=users)
 
 
-@app.route('/users/<int:user_id>')
+@app.route('/users/<int:user_id>', methods=["GET","POST"])
 def users_show(user_id):
     """Show user profile."""
 
@@ -155,7 +161,14 @@ def users_show(user_id):
                 .limit(100)
                 .all())
 
-    return render_template('users/show.html', user=user, messages=messages)
+    form = MessageForm()
+
+    if form.validate_on_submit():
+        msg = Message(text=form.text.data)
+        g.user.messages.append(msg)
+        db.session.commit()
+
+    return render_template('users/show.html', user=user, messages=messages, form=form)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -260,25 +273,16 @@ def delete_user():
 
 @app.route('/messages/new', methods=["GET", "POST"])
 def messages_add():
-    """Add a message:
-
-    Show form if GET. If valid, update message and redirect to user page.
-    """
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
+    text = request.json["text"]
+    msg = Message(text=text)
+    g.user.messages.append(msg)
+    db.session.commit()
 
-    form = MessageForm()
-
-    if form.validate_on_submit():
-        msg = Message(text=form.text.data)
-        g.user.messages.append(msg)
-        db.session.commit()
-
-        return jsonify(status='ok')
-        # redirect(f"/users/{g.user.id}")
-    return render_template('home.html', form=form)
+    return (jsonify(message=msg.serialize()), 201)
 
 
 @app.route('/messages/<int:message_id>', methods=["GET"])
@@ -323,7 +327,14 @@ def homepage():
                    .order_by(Message.timestamp.desc())
                    .limit(100)
                    .all())
-        return render_template('/users/home_all.html', messages=messages)
+        
+        form = MessageForm()
+
+        if form.validate_on_submit():
+            msg = Message(text=form.text.data)
+            g.user.messages.append(msg)
+            db.session.commit()
+        return render_template('/users/home_all.html', messages=messages, form=form)
 
     else:
         return render_template('home-anon.html')
@@ -334,6 +345,9 @@ def like_unlike_post(message_id):
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
+
+    form = MessageForm()
+    validate_form(form)
     
     message = Message.query.get(message_id)
     if message not in g.user.likes:
@@ -348,6 +362,7 @@ def like_unlike_post(message_id):
         db.session.delete(like)
         db.session.commit()
         return jsonify(message="Deleted")
+    return render_template('/users/home_all.html',form=form)
 
 @app.route('/messages/liked')
 def liked_posts():
