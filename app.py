@@ -52,11 +52,11 @@ def do_logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
 
-def validate_form(form):
-    if form.validate_on_submit():
-        msg = Message(text=form.text.data)
-        g.user.messages.append(msg)
-        db.session.commit()
+@app.context_processor
+def context_processor():
+    """Now form will be available globally across all jinja templates"""
+    form = MessageForm()
+    return dict(form=form)
 
 
 @app.route('/signup', methods=["GET", "POST"])
@@ -161,14 +161,7 @@ def users_show(user_id):
                 .limit(100)
                 .all())
 
-    form = MessageForm()
-
-    if form.validate_on_submit():
-        msg = Message(text=form.text.data)
-        g.user.messages.append(msg)
-        db.session.commit()
-
-    return render_template('users/show.html', user=user, messages=messages, form=form)
+    return render_template('users/show.html', user=user, messages=messages)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -250,7 +243,7 @@ def profile():
         flash("Invalid password", 'danger')
         return redirect('/')
 
-    return render_template('users/login.html', form=form)
+    return render_template('users/login.html', user_form=form)
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
@@ -271,7 +264,7 @@ def delete_user():
 ##############################################################################
 # Messages routes:
 
-@app.route('/messages/new', methods=["GET", "POST"])
+@app.route('/messages/new', methods=["GET","POST"])
 def messages_add():
 
     if not g.user:
@@ -328,13 +321,7 @@ def homepage():
                    .limit(100)
                    .all())
         
-        form = MessageForm()
-
-        if form.validate_on_submit():
-            msg = Message(text=form.text.data)
-            g.user.messages.append(msg)
-            db.session.commit()
-        return render_template('/users/home_all.html', messages=messages, form=form)
+        return render_template('/users/home_all.html', messages=messages)
 
     else:
         return render_template('home-anon.html')
@@ -345,9 +332,6 @@ def like_unlike_post(message_id):
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-
-    form = MessageForm()
-    validate_form(form)
     
     message = Message.query.get(message_id)
     if message not in g.user.likes:
@@ -362,7 +346,7 @@ def like_unlike_post(message_id):
         db.session.delete(like)
         db.session.commit()
         return jsonify(message="Deleted")
-    return render_template('/users/home_all.html',form=form)
+    return render_template('/users/home_all.html')
 
 @app.route('/messages/liked')
 def liked_posts():

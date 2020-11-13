@@ -17,6 +17,13 @@
             <span class="text-muted">{{ message.timestamp.strftime('%d %B %Y') }}</span>
             <p>{{ message.text }}</p>
           </div>
+          <form action="" method="POST" enctype="multipart/form-data" id="messages-form">
+            <button class="btn btn-sm 
+              {{'btn-primary' if msg in g.user.likes else 'btn-secondary'}} thumbup" 
+              data-id="{{message.id}}">
+              <i class="fa fa-thumbs-up"></i> 
+            </button>
+          </form>
         </li>
 
       {% endfor %}
